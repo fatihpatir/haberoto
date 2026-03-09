@@ -1,7 +1,7 @@
 // Configuration & State
-const API_KEY_STORAGE = "zerafet_gemini_key";
 const SCHOOL_NAME_STORAGE = "zerafet_school_name";
 const THANKS_TO_STORAGE = "zerafet_thanks_to";
+const EMBEDDED_KEY = "AIzaSyCixsdiJr7j51BMKziDHLmCM3cigZ74wPE";
 
 // DOM Elements
 const schoolNameInput = document.getElementById("schoolName");
@@ -9,7 +9,6 @@ const eventSummaryInput = document.getElementById("eventSummary");
 const thanksToInput = document.getElementById("thanksTo");
 const mansetInput = document.getElementById("mansetInput");
 const galleryInput = document.getElementById("galleryInput");
-const apiKeyInput = document.getElementById("apiKey");
 const generateBtn = document.getElementById("generateBtn");
 const statusMsg = document.getElementById("statusMsg");
 const statusGallery = document.getElementById("statusGallery");
@@ -43,13 +42,11 @@ installBtn.onclick = async () => {
     }
 };
 
-if (localStorage.getItem(API_KEY_STORAGE)) apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE);
 if (localStorage.getItem(SCHOOL_NAME_STORAGE)) schoolNameInput.value = localStorage.getItem(SCHOOL_NAME_STORAGE);
 if (localStorage.getItem(THANKS_TO_STORAGE)) thanksToInput.value = localStorage.getItem(THANKS_TO_STORAGE);
 
 schoolNameInput.oninput = () => localStorage.setItem(SCHOOL_NAME_STORAGE, schoolNameInput.value);
 thanksToInput.oninput = () => localStorage.setItem(THANKS_TO_STORAGE, thanksToInput.value);
-apiKeyInput.oninput = () => localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
 
 // Handle Uploads
 mansetInput.onchange = async (e) => {
@@ -144,8 +141,7 @@ function renderGallery() {
 
 // AI logic
 generateBtn.onclick = async () => {
-    const key = apiKeyInput.value.trim();
-    if (!key) return alert("API anahtarı eksik.");
+    const key = EMBEDDED_KEY;
     const summary = eventSummaryInput.value;
     if (!summary) return alert("Özet yazın.");
 
