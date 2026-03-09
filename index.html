@@ -121,23 +121,18 @@
                 </div>
 
                 <div class="card">
-                    <label>Optimize Edilmiş Resimler (Üzerine basılı tutup kaydedin)</label>
-                    <div id="statusGallery" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Bekleniyor...
+                    <label>Optimize Edilmiş Resimler</label>
+                    <div id="statusGallery" style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem;">
+                        Aşağıdaki düğme ile tüm fotoğrafları tek seferde indirebilirsiniz.
+                        <strong>(Tarayıcı izin isterse "İzin Ver" deyin)</strong>
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <div>
-                            <span class="tag">Web & MEB Manşet</span>
-                            <div id="webGallery"
-                                style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top:0.5rem;"></div>
-                        </div>
-                        <div>
-                            <span class="tag" style="background: #e1306c;">Instagram Paketi</span>
-                            <div id="igGallery"
-                                style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top:0.5rem;"></div>
-                        </div>
-                    </div>
+                    <button class="btn" id="downloadAllBtn"
+                        style="background: var(--surface-hover); margin-bottom: 1.5rem;" disabled>
+                        📥 Tümünü Galeriye İndir (Tek Tık)
+                    </button>
+
+                    <div id="unifiedGallery" style="display: grid; grid-template-columns: 1fr; gap: 15px;"></div>
                 </div>
             </section>
         </div>
