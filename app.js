@@ -2,15 +2,18 @@
 const SCHOOL_NAME_STORAGE = "zerafet_school_name";
 const THANKS_TO_STORAGE = "zerafet_thanks_to";
 const STAFF_CONTEXT_STORAGE = "zerafet_staff_context";
+const API_KEY_STORAGE = "zerafet_api_key";
 
-// YENİ ANAHTARINIZ GÖMÜLDÜ! 🚀
-const EMBEDDED_KEY = "AIzaSyAytFBGIG1QZPw8AZQFQyEnqv3aAb9sNYU";
+// API ANAHTARI ARTIK SİZİN CİHAZINIZDA SAKLANIR 🛡️
+let CURRENT_KEY = "";
 
 // DOM Elements
 const schoolNameInput = document.getElementById("schoolName");
 const eventSummaryInput = document.getElementById("eventSummary");
 const thanksToInput = document.getElementById("thanksTo");
 const staffContextInput = document.getElementById("staffContext");
+const apiKeyInput = document.getElementById("apiKeyInput");
+const saveKeyBtn = document.getElementById("saveKeyBtn");
 const mansetInput = document.getElementById("mansetInput");
 const galleryInput = document.getElementById("galleryInput");
 const generateBtn = document.getElementById("generateBtn");
@@ -32,10 +35,22 @@ let processedFiles = []; // {blob, name, isManset}
 if (localStorage.getItem(SCHOOL_NAME_STORAGE)) schoolNameInput.value = localStorage.getItem(SCHOOL_NAME_STORAGE);
 if (localStorage.getItem(THANKS_TO_STORAGE)) thanksToInput.value = localStorage.getItem(THANKS_TO_STORAGE);
 if (localStorage.getItem(STAFF_CONTEXT_STORAGE)) staffContextInput.value = localStorage.getItem(STAFF_CONTEXT_STORAGE);
+if (localStorage.getItem(API_KEY_STORAGE)) {
+    apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE);
+    CURRENT_KEY = apiKeyInput.value.trim();
+}
 
 schoolNameInput.oninput = () => localStorage.setItem(SCHOOL_NAME_STORAGE, schoolNameInput.value);
 thanksToInput.oninput = () => localStorage.setItem(THANKS_TO_STORAGE, thanksToInput.value);
 staffContextInput.oninput = () => localStorage.setItem(STAFF_CONTEXT_STORAGE, staffContextInput.value);
+
+saveKeyBtn.onclick = () => {
+    const key = apiKeyInput.value.trim();
+    if (!key) return alert("Lütfen geçerli bir API anahtarı giriniz.");
+    localStorage.setItem(API_KEY_STORAGE, key);
+    CURRENT_KEY = key;
+    alert("API anahtarı başarıyla kaydedildi.");
+};
 
 // Handle Uploads
 mansetInput.onchange = async (e) => {
