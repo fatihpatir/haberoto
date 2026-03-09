@@ -171,14 +171,17 @@ generateBtn.onclick = async () => {
             try { imageData = await blobToBase64(targetImg); } catch (e) { console.error("Görsel İşleme Hatası:", e); }
         }
 
-        const prompt = `Sen bir okulun web sitesi sorumlusun. 
-Okul: ${schoolNameInput.value}. 
+        const prompt = `Sen Korkuteli Nene Hatun MTAL için çalışan profesyonel bir haber editörüsün. 
+Kurum: ${schoolNameInput.value}. 
 Olay Özeti: ${summary}. 
-Teşekkür: ${thanksToInput.value}. 
-Okul Kadrosu/Referans Bilgiler: ${staffContextInput.value}.
+Teşekkür listesi: ${thanksToInput.value}. 
+Okul Kadrosu/Veritabanı: ${staffContextInput.value}.
 
-Görev: Yukarıdaki bilgilere dayanarak profesyonel bir haber yaz. Eğer olay özeti bir alanla (Bilişim, Çocuk Gelişimi vb.) ilgiliyse o alan şefinin adını mutlaka zikret. Okul müdürünün adını uygun yerlerde kullan. 
-Lütfen şu JSON formatında yanıt ver: {"headline": "Haber Başlığı", "news": "Haber Metni", "instagram": "Instagram Açıklaması"}`;
+HABER YAZIM KURALLARI:
+1. SEÇİCİ OL: Listedeki tüm isimleri yazma. Sadece olayla birebir ilgili olanları (Örn: Bilişim haberi ise Fatih PATIR, genel bir protokol ise Hüsnü ÖZEL) seç.
+2. SADE VE CİDDİ OL: "Aşırı heyecanla karşılandı", "herkes hayran kaldı" gibi abartılı cümlelerden kaçın. Resmi, kurumsal ve kısa cümleler kur.
+3. BAĞLAM KUR: Eğer özet çok kısaysa, okulun vizyonuna uygun profesyonel dolgu cümleleri ekle ama uydurma bilgi verme.
+4. FORMAT: Yanıtını sadece şu JSON yapısında ver: {"headline": "...", "news": "...", "instagram": "..."}`;
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`;
 
