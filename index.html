@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okul Haber Otomasyonu | Zerafet AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HaberAI">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏫</text></svg>">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Okul Haber Otomasyonu</h1>
+            <p>Yapay zeka ile saniyeler içinde haber ve sosyal medya içeriği oluşturun.</p>
+        </header>
+
+        <button id="installBtn" class="btn">📱 Uygulamayı Telephona Yükle</button>
+
+        <div class="ios-prompt" id="iosPrompt">
+             <strong>iPhone'a Yüklemek İçin:</strong> <br>
+            Aşağıdaki <strong>Paylaş</strong> ikonuna basın ve ardından <strong>Ana Ekrana Ekle</strong> seçeneğini
+            seçin.
+        </div>
+
+        <div class="main-grid">
+            <!-- Input Section -->
+            <section class="card">
+                <div class="input-group">
+                    <label>Gemini API Anahtarı <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                            style="font-size: 0.6rem; color: #818cf8; text-transform: none;">(Buradan ücretsiz
+                            alabilirsiniz)</a></label>
+                    <input type="password" id="apiKey" placeholder="Yapay zeka için anahtarı buraya girin">
+                </div>
+
+                <div class="input-group">
+                    <label>Okul Adı</label>
+                    <input type="text" id="schoolName" placeholder="Örn: Zerafet Ortaokulu" value="Zerafet Ortaokulu">
+                </div>
+
+                <div class="input-group">
+                    <label>Olay Kısa Özeti</label>
+                    <textarea id="eventSummary" rows="3"
+                        placeholder="Örn: 10 Kasım Atatürk'ü anma töreni düzenlendi."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Teşekkür Edilecek Kişiler</label>
+                    <input type="text" id="thanksTo" placeholder="Örn: Müzik öğretmeni Ahmet Bey ve koro">
+                </div>
+
+                <div class="upload-area" id="mansetZone"
+                    style="border-color: var(--primary); background: rgba(79, 70, 229, 0.05);">
+                    <input type="file" id="mansetInput" accept="image/*">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        style="margin-bottom: 8px; color: var(--primary);">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <p style="font-size: 0.9rem; font-weight: 700;">🏠 Ana Manşet Fotoğrafı</p>
+                    <span style="font-size: 10px; color: var(--text-muted);">Haberin ana vitrin resmi (1 Adet)</span>
+                </div>
+
+                <div class="upload-area" id="galleryZone">
+                    <input type="file" id="galleryInput" accept="image/*" multiple>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px; opacity: 0.5;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p style="font-size: 0.9rem; font-weight: 700;">📂 Haber Galerisi Resimleri</p>
+                    <span style="font-size: 10px; color: var(--text-muted);">Haberin içindeki diğer fotolar (Çoklu
+                        Seçim)</span>
+                </div>
+
+                <div id="galleryPreview"
+                    style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 1rem;"></div>
+
+                <button id="generateBtn" class="btn" style="margin-top: 2rem;" disabled>
+                    İçeriği Oluştur (Yapay Zeka)
+                </button>
+
+                <div id="statusMsg"
+                    style="margin-top: 1rem; font-size: 0.8rem; text-align: center; color: var(--success); display: none;">
+                    <span class="loading-dots">Hazırlanıyor</span>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results">
+                <!-- News Content -->
+                <div class="card result-box">
+                    <span class="tag">Web Sitesi Haberi</span>
+                    <button class="copy-btn" onclick="copyText('newsOutput')">Kopyala</button>
+                    <h3 id="headlineOutput" style="margin-bottom: 0.5rem; color: #818cf8;">...</h3>
+                    <p id="newsOutput" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+                        Lütfen önce ayarları yapın ve fotoğraf yükleyin.
+                    </p>
+                </div>
+
+                <!-- Instagram Content -->
+                <div class="card result-box">
+                    <span class="tag" style="background: #e1306c;">Instagram Gönderisi</span>
+                    <button class="copy-btn" onclick="copyText('igOutput')">Kopyala</button>
+                    <p id="igOutput" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
+                        Henüz oluşturulmadı.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <label>Optimize Edilmiş Resimler (Üzerine basılı tutup kaydedin)</label>
+                    <div id="statusGallery" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Bekleniyor...
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div>
+                            <span class="tag">Web & MEB Manşet</span>
+                            <div id="webGallery"
+                                style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top:0.5rem;"></div>
+                        </div>
+                        <div>
+                            <span class="tag" style="background: #e1306c;">Instagram Paketi</span>
+                            <div id="igGallery"
+                                style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top:0.5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p><a href="https://fatihpatir.github.io/web" target="_blank">Fatih Patır</a></p>
+            <p>Korkuteli Nene Hatun MTAL | Korkuteli / Antalya</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+    </script>
+</body>
+
+</html>
