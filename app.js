@@ -21,8 +21,6 @@ const igOutput = document.getElementById("igOutput");
 const installBtn = document.getElementById("installBtn");
 const iosPrompt = document.getElementById("iosPrompt");
 const downloadAllBtn = document.getElementById("downloadAllBtn");
-const voiceSummaryBtn = document.getElementById("voiceSummary");
-const voiceThanksBtn = document.getElementById("voiceThanks");
 
 let uploadedManset = null;
 let uploadedGallery = [];
@@ -162,21 +160,32 @@ generateBtn.onclick = async () => {
 
         const prompt = `Sen bir okulun web uzmanısın. Okul: ${schoolNameInput.value} Özet: ${summary} Teşekkür: ${thanksToInput.value} Sadece JSON yanıt ver: {"headline": "...", "news": "...", "instagram": "..."}`;
 
-        // Denenecek model listesi (Sırasıyla en iyi/hızlı olanlar)
-        const models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+        // Daha geniş kapsamlı model listesi
+        const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro"];
         let success = false;
         let lastError = "";
 
         for (const model of models) {
             try {
-                // v1beta sürümü yeni modeller için daha uyumludur
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                // Önce kararlı v1 API'sini deniyoruz
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
                 });
 
-                const result = await res.json();
+                let result = await res.json();
+
+                // v1 hata verirse bir de v1beta ile deniyoruz (Bazen bazı anahtarlar sadece burada çalışır)
+                if (result.error && (result.error.code === 404 || result.error.status === "NOT_FOUND")) {
+                    const resBeta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
+                    });
+                    result = await resBeta.json();
+                }
+
                 if (result.error) {
                     lastError = `${result.error.message} (Kod: ${result.error.code})`;
                     console.warn(`${model} denemesi başarısız:`, lastError);
@@ -228,9 +237,25 @@ generateBtn.onclick = async () => {
     }
 };
 
-downloadAllBtn.onclick = () => {
+downloadAllBtn.onclick = async () => {
+    // iOS ve modern cihazlar için "Paylaş" menüsü üzerinden toplu kayıt (En pratiği)
+    if (navigator.share && navigator.canShare) {
+        try {
+            const filesToShare = processedFiles.map(f => new File([f.blob], `${f.name}.jpg`, { type: "image/jpeg" }));
+            if (navigator.canShare({ files: filesToShare })) {
+                await navigator.share({
+                    files: filesToShare,
+                    title: 'Okul Haber Resimleri',
+                });
+                return; // Paylaşım başarılıysa aşağıya devam etme
+            }
+        } catch (e) {
+            console.log("Paylaşım iptal edildi veya desteklenmiyor.");
+        }
+    }
+
+    // Klasik yöntem (Android/PC için sıralı indirme)
     processedFiles.forEach((f, i) => {
-        // Tarayıcının aynı anda çok fazla indirmeyi engellememesi için küçük bir gecikme ekliyoruz
         setTimeout(() => {
             const a = document.createElement("a");
             a.href = URL.createObjectURL(f.blob);
@@ -238,7 +263,7 @@ downloadAllBtn.onclick = () => {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-        }, i * 250);
+        }, i * 300);
     });
 };
 
@@ -269,41 +294,3 @@ async function resizeImage(img, maxWidth, maxHeight, quality, forceRatio) {
 function blobToBase64(blob) { return new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); }); }
 function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); alert("Kopyalandı!"); }
 
-// Voice Recognition Feature
-function initVoice(btn, targetInput, storageKey) {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        btn.style.display = 'none'; // Tarayıcı desteklemiyorsa butonu gizle
-        return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'tr-TR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    btn.onclick = () => {
-        if (btn.classList.contains('voice-recording')) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
-    };
-
-    recognition.onstart = () => btn.classList.add('voice-recording');
-    recognition.onend = () => btn.classList.remove('voice-recording');
-    recognition.onerror = () => btn.classList.remove('voice-recording');
-
-    recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-        if (targetInput.tagName === 'TEXTAREA') {
-            targetInput.value += (targetInput.value ? ' ' : '') + text;
-        } else {
-            targetInput.value = text;
-        }
-        if (storageKey) localStorage.setItem(storageKey, targetInput.value);
-    };
-}
-
-initVoice(voiceSummaryBtn, eventSummaryInput, null);
-initVoice(voiceThanksBtn, thanksToInput, THANKS_TO_STORAGE);
