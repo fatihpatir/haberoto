@@ -21,11 +21,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>Okul Haber Otomasyonu</h1>
-            <p>Yapay zeka ile saniyeler içinde haber ve sosyal medya içeriği oluşturun.</p>
+            <div class="header-top">
+                <h1>Okul Haber Otomasyonu</h1>
+                <button id="helpBtn" class="icon-btn" title="Nasıl Kullanılır?">❓</button>
+            </div>
+            <p>Yapay zeka desteğiyle kurumsal standartlarda haber ve sosyal medya içerikleri oluşturun.</p>
         </header>
 
-        <button id="installBtn" class="btn">📱 Uygulamayı Telephona Yükle</button>
+        <button id="installBtn" class="btn">📲 Uygulamayı Cihaza Yükle</button>
 
         <div class="ios-prompt" id="iosPrompt">
              <strong>iPhone'a Yüklemek İçin:</strong> <br>
@@ -96,23 +99,57 @@
 
             <!-- Results Section -->
             <section class="results">
-                <!-- News Content -->
-                <div class="card result-box">
-                    <span class="tag">Web Sitesi Haberi</span>
-                    <button class="copy-btn" onclick="copyText('newsOutput')">Kopyala</button>
-                    <h3 id="headlineOutput" style="margin-bottom: 0.5rem; color: #818cf8;">...</h3>
-                    <p id="newsOutput" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
-                        Lütfen önce ayarları yapın ve fotoğraf yükleyin.
-                    </p>
+                <!-- Result Section -->
+                <div class="card result-card">
+                    <div class="result-header">
+                        <h2><i class="fas fa-file-alt"></i> Oluşturulan Haber</h2>
+                        <div id="statusMsg" class="status-badge" style="display: none;"></div>
+                    </div>
+
+                    <div class="output-group">
+                        <div class="output-header">
+                            <label>Haber Başlığı</label>
+                            <button class="copy-btn mini" onclick="copyText('headlineOutput')">📋 Başlığı
+                                Kopyala</button>
+                        </div>
+                        <div id="headlineOutput" class="output-box headline">Başlık burada görünecek...</div>
+                    </div>
+
+                    <div class="output-group">
+                        <div class="output-header">
+                            <label>Haber Metni</label>
+                            <button class="copy-btn mini" onclick="copyText('newsOutput')">📋 Metni Kopyala</button>
+                        </div>
+                        <div id="newsOutput" class="output-box content">Haber içeriği burada görünecek...</div>
+                    </div>
+
+                    <div class="output-group">
+                        <div class="output-header">
+                            <label>Instagram Açıklaması</label>
+                            <button class="copy-btn mini" onclick="copyText('igOutput')">📋 Açıklamayı Kopyala</button>
+                        </div>
+                        <div id="igOutput" class="output-box instagram">Instagram içeriği burada görünecek...</div>
+                    </div>
                 </div>
 
-                <!-- Instagram Content -->
-                <div class="card result-box">
-                    <span class="tag" style="background: #e1306c;">Instagram Gönderisi</span>
-                    <button class="copy-btn" onclick="copyText('igOutput')">Kopyala</button>
-                    <p id="igOutput" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
-                        Henüz oluşturulmadı.
-                    </p>
+                <!-- School Context (Hidden/System Info) -->
+                <div class="card context-card" style="margin-top: 20px; border-color: var(--secondary);">
+                    <div class="result-header">
+                        <h3><i class="fas fa-university"></i> Okul Bilgileri (Yapay Zeka Referansı)</h3>
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 10px;">Yapay zeka haber yazarken aşağıdaki
+                        isimleri ve görevleri referans alacaktır.</p>
+                    <textarea id="staffContext"
+                        style="width: 100%; height: 120px; background: rgba(0,0,0,0.15); color: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px; font-size: 0.85rem;">
+Okul Müdürü: Hüsnü ÖZEL
+Müdür Yardımcıları: Şaban YALÇIN, Ali ŞAHİN
+Derslik Şefleri/Alan Şefleri: 
+- Bilişim: Fatih PATIR
+- Çocuk Gelişimi: Sevtap DOĞRUL
+- Moda Tasarım: Azime AKSARI
+- Güzellik: Hafize KÖK
+- Bilişim Atölye: Orhan AKAR, Murat ASLI
+                </textarea>
                 </div>
 
                 <div class="card">
@@ -130,20 +167,52 @@
                     <div id="unifiedGallery" style="display: grid; grid-template-columns: 1fr; gap: 15px;"></div>
                 </div>
             </section>
+            </main>
+
+            <div class="card help-modal" id="helpModal" style="display:none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>📚 Kullanım Kılavuzu</h2>
+                        <button class="close-btn" onclick="toggleModal('helpModal', false)">✕</button>
+                    </div>
+                    <div class="help-body">
+                        <section>
+                            <h4>Bu Uygulama Ne İşe Yarar?</h4>
+                            <p>Okul haberlerini ve sosyal medya içeriklerini MEB standartlarına uygun, profesyonel bir
+                                dille saniyeler içinde oluşturmanızı sağlayan yapay zeka destekli bir asistan
+                                yazılımdır.</p>
+                        </section>
+                        <section>
+                            <h4>Nasıl Kullanılır?</h4>
+                            <ul>
+                                <li><strong>1. Görsel Seçimi:</strong> Manşet (1 adet) ve haber galerisi görsellerini
+                                    seçin. Sistem bunları otomatik optimize eder.</li>
+                                <li><strong>2. Olay Özeti:</strong> Yapılacak haberin detaylarını kısaca yazın (Örn: "29
+                                    Ekim kutlamaları yapıldı").</li>
+                                <li><strong>3. Akıllı Referans:</strong> "Okul Bilgileri" kısmına öğretmen ve yönetici
+                                    isimlerini bir kez girin, yapay zeka onları her haberde tanısın.</li>
+                                <li><strong>4. İçerik Üretimi:</strong> "Haber Oluştur" butonuna basın. Başlık, haber
+                                    metni ve Instagram açıklaması saniyeler içinde hazır olur.</li>
+                                <li><strong>5. Kopyalama:</strong> Başlık ve metni ayrı ayrı kopyalayarak web sitenize
+                                    veya Instagram'a yapıştırın.</li>
+                            </ul>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                <p>© 2026 Korkuteli Nene Hatun Kız Mesleki ve Teknik Anadolu Lisesi</p>
+                <p>Haber Otomasyonu v5.0 - Profesyonel Sürüm</p>
+            </footer>
         </div>
 
-        <footer>
-            <p><a href="https://fatihpatir.github.io/web" target="_blank">Fatih Patır</a></p>
-            <p>Korkuteli Nene Hatun MTAL | Korkuteli / Antalya</p>
-        </footer>
-    </div>
-
-    <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
-    </script>
+        <script src="app.js"></script>
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js');
+            }
+        </script>
 </body>
 
 </html>
