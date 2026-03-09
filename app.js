@@ -21,6 +21,8 @@ const igOutput = document.getElementById("igOutput");
 const installBtn = document.getElementById("installBtn");
 const iosPrompt = document.getElementById("iosPrompt");
 const downloadAllBtn = document.getElementById("downloadAllBtn");
+const voiceSummaryBtn = document.getElementById("voiceSummary");
+const voiceThanksBtn = document.getElementById("voiceThanks");
 
 let uploadedManset = null;
 let uploadedGallery = [];
@@ -90,9 +92,10 @@ async function processAll() {
         addThumb(uploadedGallery[i]);
     }
 
-    statusMsg.innerHTML = "Görseller optimize edildi. <span style='color: var(--success);'>✓</span>";
-    statusGallery.innerText = `${total} görsel işlendi.`;
+    statusMsg.innerHTML = "Görseller hazır. <span style='color: var(--success);'>✓</span>";
+    statusGallery.innerText = `${total} görsel optimize edildi.`;
     generateBtn.disabled = total === 0;
+    downloadAllBtn.disabled = total === 0; // Resimler işlendiği an indirilebilir olsun
     renderGallery();
 }
 
@@ -158,30 +161,71 @@ generateBtn.onclick = async () => {
         if (targetImg) imageData = await blobToBase64(targetImg);
 
         const prompt = `Sen bir okulun web uzmanısın. Okul: ${schoolNameInput.value} Özet: ${summary} Teşekkür: ${thanksToInput.value} Sadece JSON yanıt ver: {"headline": "...", "news": "...", "instagram": "..."}`;
-        const model = "gemini-1.5-flash-latest";
-        const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + key, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
-        });
 
-        const result = await res.json();
-        if (result.error) throw new Error(result.error.message);
+        // Denenecek model listesi (Sırasıyla en iyi/hızlı olanlar)
+        const models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+        let success = false;
+        let lastError = "";
 
-        const data = JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim());
-        headlineOutput.innerText = data.headline;
-        newsOutput.innerText = data.news;
-        igOutput.innerText = data.instagram;
+        for (const model of models) {
+            try {
+                // v1beta sürümü yeni modeller için daha uyumludur
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
+                });
 
-        const slug = slugify(data.headline);
-        processedFiles.forEach((f, i) => {
-            f.name = f.isManset ? `${slug}-manset` : `${slug}-${i}`;
-        });
+                const result = await res.json();
+                if (result.error) {
+                    lastError = `${result.error.message} (Kod: ${result.error.code})`;
+                    console.warn(`${model} denemesi başarısız:`, lastError);
+                    continue;
+                }
 
-        downloadAllBtn.disabled = false;
+                if (!result.candidates || !result.candidates[0]) {
+                    lastError = "API yanıt verdi ama içerik üretmedi.";
+                    continue;
+                }
+
+                const rawText = result.candidates[0].content.parts[0].text;
+                const cleanJson = rawText.replace(/```json|```/g, "").trim();
+                const data = JSON.parse(cleanJson);
+
+                headlineOutput.innerText = data.headline;
+                newsOutput.innerText = data.news;
+                igOutput.innerText = data.instagram;
+
+                // Başlık geldiyse isimleri güncelle
+                const slug = slugify(data.headline);
+                processedFiles.forEach((f, i) => {
+                    f.name = f.isManset ? `${slug}-manset` : `${slug}-${i}`;
+                });
+
+                success = true;
+                break;
+            } catch (err) {
+                lastError = err.message;
+                continue;
+            }
+        }
+
+        if (!success) {
+            alert("Maalesef yapay zeka şu an yanıt veremiyor. \n\nHata: " + lastError + "\n\nNot: Resimlerinizi sitemiz üzerinden yine de indirebilirsiniz.");
+            // AI başarısız olsa bile varsayılan isimlerle indirme için hazırla
+            const defaultName = "okul-haberi-" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+            processedFiles.forEach((f, i) => {
+                f.name = f.isManset ? `${defaultName}-manset` : `${defaultName}-${i}`;
+            });
+        }
+
         renderGallery();
-    } catch (err) { alert("Hata: " + err.message); }
-    finally { generateBtn.disabled = false; statusMsg.style.display = "none"; }
+    } catch (err) {
+        alert("Sistemsel Hata: " + err.message);
+    } finally {
+        generateBtn.disabled = false;
+        statusMsg.style.display = "none";
+    }
 };
 
 downloadAllBtn.onclick = () => {
@@ -224,3 +268,42 @@ async function resizeImage(img, maxWidth, maxHeight, quality, forceRatio) {
 
 function blobToBase64(blob) { return new Promise(r => { const reader = new FileReader(); reader.onloadend = () => r(reader.result); reader.readAsDataURL(blob); }); }
 function copyText(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); alert("Kopyalandı!"); }
+
+// Voice Recognition Feature
+function initVoice(btn, targetInput, storageKey) {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        btn.style.display = 'none'; // Tarayıcı desteklemiyorsa butonu gizle
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'tr-TR';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    btn.onclick = () => {
+        if (btn.classList.contains('voice-recording')) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    };
+
+    recognition.onstart = () => btn.classList.add('voice-recording');
+    recognition.onend = () => btn.classList.remove('voice-recording');
+    recognition.onerror = () => btn.classList.remove('voice-recording');
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        if (targetInput.tagName === 'TEXTAREA') {
+            targetInput.value += (targetInput.value ? ' ' : '') + text;
+        } else {
+            targetInput.value = text;
+        }
+        if (storageKey) localStorage.setItem(storageKey, targetInput.value);
+    };
+}
+
+initVoice(voiceSummaryBtn, eventSummaryInput, null);
+initVoice(voiceThanksBtn, thanksToInput, THANKS_TO_STORAGE);

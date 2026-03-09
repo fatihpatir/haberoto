@@ -50,13 +50,19 @@
 
                 <div class="input-group">
                     <label>Olay Kısa Özeti</label>
-                    <textarea id="eventSummary" rows="3"
-                        placeholder="Örn: 10 Kasım Atatürk'ü anma töreni düzenlendi."></textarea>
+                    <div style="position: relative;">
+                        <textarea id="eventSummary" rows="3"
+                            placeholder="Örn: 10 Kasım Atatürk'ü anma töreni düzenlendi."></textarea>
+                        <button id="voiceSummary" class="voice-btn" title="Sesle Yaz">🎤</button>
+                    </div>
                 </div>
 
                 <div class="input-group">
                     <label>Teşekkür Edilecek Kişiler</label>
-                    <input type="text" id="thanksTo" placeholder="Örn: Müzik öğretmeni Ahmet Bey ve koro">
+                    <div style="position: relative;">
+                        <input type="text" id="thanksTo" placeholder="Örn: Müzik öğretmeni Ahmet Bey ve koro">
+                        <button id="voiceThanks" class="voice-btn" title="Sesle Yaz">🎤</button>
+                    </div>
                 </div>
 
                 <div class="upload-area" id="mansetZone"
