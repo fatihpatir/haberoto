@@ -93,6 +93,7 @@ async function processAll() {
     statusMsg.innerHTML = "Görseller hazır. <span style='color: var(--success);'>✓</span>";
     statusGallery.innerText = `${total} görsel optimize edildi.`;
     generateBtn.disabled = total === 0;
+    downloadAllBtn.disabled = total === 0;
     renderGallery();
 }
 
