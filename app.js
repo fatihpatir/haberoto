@@ -149,82 +149,77 @@ generateBtn.onclick = async () => {
     const summary = eventSummaryInput.value;
     if (!summary) return alert("Özet yazın.");
 
-    generateBtn.disabled = true;
-    statusMsg.style.display = "block";
-    statusMsg.innerHTML = "Gemini AI analiz ediyor <span class='loading-dots'></span>";
-
     try {
         let imageData = "";
         const targetImg = uploadedManset || uploadedGallery[0];
         if (targetImg) imageData = await blobToBase64(targetImg);
 
-        const prompt = `Sen bir okulun web uzmanısın. Okul: ${schoolNameInput.value} Özet: ${summary} Teşekkür: ${thanksToInput.value} Sadece JSON yanıt ver: {"headline": "...", "news": "...", "instagram": "..."}`;
+        const prompt = `Sen bir okulun web sitesi sorumlusun. Okul: ${schoolNameInput.value}. Olay Özeti: ${summary}. Teşekkür: ${thanksToInput.value}. Bu bilgilere ve fotoğrafa göre şu JSON formatında yanıt ver: {"headline": "Haber Başlığı", "news": "Haber Metni", "instagram": "Instagram Açıklaması"}`;
 
-        // Daha geniş kapsamlı model listesi
-        const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-pro"];
+        // Denenecek model ve endpoint kombinasyonları (Senin verdiğin örneğe göre güncellendi)
+        const configs = [
+            { version: "v1beta", model: "gemini-flash-latest" }, // Senin örneğindeki model
+            { version: "v1beta", model: "gemini-1.5-flash" },
+            { version: "v1", model: "gemini-1.5-flash" },
+            { version: "v1beta", model: "gemini-1.5-pro" }
+        ];
+
         let success = false;
         let lastError = "";
 
-        for (const model of models) {
+        for (const config of configs) {
             try {
-                // Önce kararlı v1 API'sini deniyoruz
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`, {
+                const apiUrl = `https://generativelanguage.googleapis.com/${config.version}/models/${config.model}:generateContent?key=${key}`;
+
+                const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])
+                            ]
+                        }]
+                    })
                 });
 
-                let result = await res.json();
-
-                // v1 hata verirse bir de v1beta ile deniyoruz (Bazen bazı anahtarlar sadece burada çalışır)
-                if (result.error && (result.error.code === 404 || result.error.status === "NOT_FOUND")) {
-                    const resBeta = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(imageData ? [{ inline_data: { mime_type: "image/jpeg", data: imageData.split(',')[1] } }] : [])] }] })
-                    });
-                    result = await resBeta.json();
-                }
+                const result = await response.json();
 
                 if (result.error) {
-                    lastError = `${result.error.message} (Kod: ${result.error.code})`;
-                    console.warn(`${model} denemesi başarısız:`, lastError);
+                    lastError = `${result.error.message} (${config.model} - ${config.version})`;
                     continue;
                 }
 
-                if (!result.candidates || !result.candidates[0]) {
-                    lastError = "API yanıt verdi ama içerik üretmedi.";
-                    continue;
+                if (result.candidates && result.candidates[0]) {
+                    const rawText = result.candidates[0].content.parts[0].text;
+                    const cleanJson = rawText.replace(/```json|```/g, "").trim();
+                    const data = JSON.parse(cleanJson);
+
+                    headlineOutput.innerText = data.headline;
+                    newsOutput.innerText = data.news;
+                    igOutput.innerText = data.instagram;
+
+                    const slug = slugify(data.headline);
+                    processedFiles.forEach((f, i) => {
+                        f.name = f.isManset ? `${slug}-manset` : `${slug}-${i}`;
+                    });
+
+                    success = true;
+                    break;
                 }
-
-                const rawText = result.candidates[0].content.parts[0].text;
-                const cleanJson = rawText.replace(/```json|```/g, "").trim();
-                const data = JSON.parse(cleanJson);
-
-                headlineOutput.innerText = data.headline;
-                newsOutput.innerText = data.news;
-                igOutput.innerText = data.instagram;
-
-                // Başlık geldiyse isimleri güncelle
-                const slug = slugify(data.headline);
-                processedFiles.forEach((f, i) => {
-                    f.name = f.isManset ? `${slug}-manset` : `${slug}-${i}`;
-                });
-
-                success = true;
-                break;
-            } catch (err) {
-                lastError = err.message;
+            } catch (e) {
+                lastError = e.message;
                 continue;
             }
         }
 
         if (!success) {
-            alert("Maalesef yapay zeka şu an yanıt veremiyor. \n\nHata: " + lastError + "\n\nNot: Resimlerinizi sitemiz üzerinden yine de indirebilirsiniz.");
-            // AI başarısız olsa bile varsayılan isimlerle indirme için hazırla
-            const defaultName = "okul-haberi-" + new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+            alert("YAPAY ZEKA BAĞLANTI HATASI\n\nAlınan son hata: " + lastError + "\n\n💡 İPUCU: API anahtarınızın 'Gemini API' için aktif olduğundan ve kısıtlama (billing/region) olmadığından emin olun.");
+            // Fallback isimler
+            const dateStr = new Date().toISOString().slice(0, 10);
             processedFiles.forEach((f, i) => {
-                f.name = f.isManset ? `${defaultName}-manset` : `${defaultName}-${i}`;
+                f.name = f.isManset ? `haber-${dateStr}-manset` : `haber-${dateStr}-${i}`;
             });
         }
 
@@ -277,17 +272,44 @@ function slugify(text) {
 async function resizeImage(img, maxWidth, maxHeight, quality, forceRatio) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    let tw = maxWidth, th = maxHeight, sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+    let tw, th, sx = 0, sy = 0, sw = img.width, sh = img.height;
+
     if (forceRatio) {
-        const ratio = tw / th;
-        if (img.width / img.height > ratio) { sw = img.height * ratio; sx = (img.width - sw) / 2; }
-        else { sh = img.width / ratio; sy = (img.height - sh) / 2; }
+        // Manşet: Oran korunmalı (3:2)
+        tw = maxWidth;
+        th = maxHeight;
+
+        // Eğer orijinal resim çok küçükse (örn 600px), 1200'e zorlamak kaliteyi bozar
+        // Ama web sitesi düzeni için 1200x800 idealdir. 
+        // WhatsApp resimleri genelde 1000px+ olduğu için burada sabit kalmak iyidir.
+
+        const targetRatio = tw / th;
+        if (img.width / img.height > targetRatio) {
+            sw = img.height * targetRatio;
+            sx = (img.width - sw) / 2;
+        } else {
+            sh = img.width / targetRatio;
+            sy = (img.height - sh) / 2;
+        }
     } else {
-        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-        tw = img.width * ratio; th = img.height * ratio;
+        // Galeri: Sadece gerekirse küçült, ASLA büyütme (WhatsApp resimleri korunur)
+        if (img.width > maxWidth || img.height > maxHeight) {
+            const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+            tw = img.width * ratio;
+            th = img.height * ratio;
+        } else {
+            // Resim zaten küçükse olduğu gibi bırak (Sadece KB boyutu düşsün)
+            tw = img.width;
+            th = img.height;
+        }
     }
-    canvas.width = tw; canvas.height = th;
+
+    canvas.width = tw;
+    canvas.height = th;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
+
+    // JPEG formatına çevirip kaliteyi optimize ederek (0.75) KB boyutunu düşürüyoruz
     return new Promise(r => canvas.toBlob(b => r(b), "image/jpeg", quality));
 }
 
