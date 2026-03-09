@@ -139,22 +139,30 @@ function renderGallery() {
 
 // AI logic
 const helpBtn = document.getElementById("helpBtn");
+const settingsBtn = document.getElementById("settingsBtn");
 const helpModal = document.getElementById("helpModal");
+const settingsModal = document.getElementById("settingsModal");
 
 function toggleModal(id, show) {
     document.getElementById(id).style.display = show ? "block" : "none";
 }
 
 helpBtn.onclick = () => toggleModal("helpModal", true);
+settingsBtn.onclick = () => toggleModal("settingsModal", true);
 
 generateBtn.onclick = async () => {
-    const key = EMBEDDED_KEY.trim();
+    const key = CURRENT_KEY.trim();
+    if (!key) {
+        toggleModal("settingsModal", true);
+        return alert("Haber oluşturulabilmesi için bir API anahtarı girilmeli ve kaydedilmelidir. Sayfanın sol üstündeki ⚙️ simgesine basarak anahtarınızı kaydediniz.");
+    }
+
     const summary = eventSummaryInput.value.trim();
     if (!summary) return alert("Haber oluşturulabilmesi için bir olay özeti girilmelidir.");
 
     generateBtn.disabled = true;
     statusMsg.style.display = "block";
-    statusMsg.innerHTML = "İçerik analiz ediliyor ve oluşturuluyor... <span class='loading-dots'></span>";
+    statusMsg.innerHTML = "İçerik profesyonel dilde analiz ediliyor... <span class='loading-dots'></span>";
 
     try {
         let imageData = "";

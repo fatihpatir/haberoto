@@ -22,6 +22,7 @@
     <div class="container">
         <header>
             <div class="header-top">
+                <button id="settingsBtn" class="icon-btn" title="Ayarlar">⚙️</button>
                 <h1>Okul Haber Otomasyonu</h1>
                 <button id="helpBtn" class="icon-btn" title="Nasıl Kullanılır?">❓</button>
             </div>
@@ -37,19 +38,6 @@
         </div>
 
         <div class="main-grid">
-            <!-- Settings Section -->
-            <section class="card settings-card"
-                style="grid-column: 1 / -1; margin-bottom: 2rem; border-color: var(--accent);">
-                <div class="result-header" style="margin-bottom: 1rem;">
-                    <h3><i class="fas fa-cog"></i> API Yapılandırması</h3>
-                    <button class="copy-btn mini" id="saveKeyBtn">💾 Anahtarı Kaydet</button>
-                </div>
-                <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 10px;">Google API anahtarınızı buraya giriniz.
-                    Bu bilgi sadece sizin tarayıcınızda saklanır, GitHub'a gönderilmez.</p>
-                <input type="password" id="apiKeyInput" placeholder="AIzaSy..."
-                    style="background: rgba(0,0,0,0.5); font-family: monospace;">
-            </section>
-
             <!-- Input Section -->
             <section class="card">
                 <div class="input-group">
@@ -181,50 +169,72 @@ Derslik Şefleri/Alan Şefleri:
             </section>
             </main>
 
-            <div class="card help-modal" id="helpModal" style="display:none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>📚 Kullanım Kılavuzu</h2>
-                        <button class="close-btn" onclick="toggleModal('helpModal', false)">✕</button>
-                    </div>
-                    <div class="help-body">
-                        <section>
-                            <h4>Bu Uygulama Ne İşe Yarar?</h4>
-                            <p>Okul haberlerini ve sosyal medya içeriklerini MEB standartlarına uygun, profesyonel bir
-                                dille saniyeler içinde oluşturmanızı sağlayan yapay zeka destekli bir asistan
-                                yazılımdır.</p>
-                        </section>
-                        <section>
-                            <h4>Nasıl Kullanılır?</h4>
-                            <ul>
-                                <li><strong>1. Görsel Seçimi:</strong> Manşet (1 adet) ve haber galerisi görsellerini
-                                    seçin. Sistem bunları otomatik optimize eder.</li>
-                                <li><strong>2. Olay Özeti:</strong> Yapılacak haberin detaylarını kısaca yazın (Örn: "29
-                                    Ekim kutlamaları yapıldı").</li>
-                                <li><strong>3. Akıllı Referans:</strong> "Okul Bilgileri" kısmına öğretmen ve yönetici
-                                    isimlerini bir kez girin, yapay zeka onları her haberde tanısın.</li>
-                                <li><strong>4. İçerik Üretimi:</strong> "Haber Oluştur" butonuna basın. Başlık, haber
-                                    metni ve Instagram açıklaması saniyeler içinde hazır olur.</li>
-                                <li><strong>5. Kopyalama:</strong> Başlık ve metni ayrı ayrı kopyalayarak web sitenize
-                                    veya Instagram'a yapıştırın.</li>
-                            </ul>
-                        </section>
-                    </div>
-                </div>
-            </div>
-
-            <footer>
-                <p>© 2026 Korkuteli Nene Hatun Kız Mesleki ve Teknik Anadolu Lisesi</p>
-                <p>Haber Otomasyonu v5.0 - Profesyonel Sürüm</p>
-            </footer>
         </div>
 
-        <script src="app.js"></script>
-        <script>
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js');
-            }
-        </script>
+        <!-- Help Modal -->
+        <div class="card help-modal" id="helpModal" style="display:none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📚 Kullanım Kılavuzu</h2>
+                    <button class="close-btn" onclick="toggleModal('helpModal', false)">✕</button>
+                </div>
+                <div class="help-body">
+                    <section style="margin-top: 0;">
+                        <h4>Bu Uygulama Ne İşe Yarar?</h4>
+                        <p>Okul haberlerini MEB standartlarına uygun, profesyonel bir dille saniyeler içinde
+                            oluşturmanızı sağlayan yapay zeka asistanıdır.</p>
+                    </section>
+                    <section>
+                        <h4>Nasıl Kullanılır?</h4>
+                        <ul>
+                            <li><strong>1. Görsel Seçimi:</strong> Manşet ve haber galerisi görsellerini seçin.</li>
+                            <li><strong>2. Olay Özeti:</strong> Yapılacak haberin detaylarını kısaca yazın.</li>
+                            <li><strong>3. Akıllı Referans:</strong> "Okul Bilgileri" kısmına isimleri bir kez girin.
+                            </li>
+                            <li><strong>4. İçerik Üretimi:</strong> "Haber Oluştur" butonuna basın.</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Configuration Modal -->
+        <div class="card help-modal" id="settingsModal" style="display:none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ API Yapılandırması</h2>
+                    <button class="close-btn" onclick="toggleModal('settingsModal', false)">✕</button>
+                </div>
+                <div class="help-body">
+                    <section style="margin-top: 0;">
+                        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.5rem;">
+                            Google API anahtarınızı buraya girip kaydediniz. Bu bilgi yalnızca cihazınızın yerel
+                            hafızasında saklanır ve dışarıya aktarılmaz.
+                        </p>
+                        <div class="input-group">
+                            <label>Yeni Gemini API Anahtarı</label>
+                            <input type="password" id="apiKeyInput" placeholder="AIzaSy..."
+                                style="background: rgba(0,0,0,0.5); font-family: monospace;">
+                        </div>
+                        <button class="btn" id="saveKeyBtn" style="margin-top: 1rem; background: var(--success);">💾
+                            Yapılandırmayı Kaydet</button>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2026 Korkuteli Nene Hatun Kız Mesleki ve Teknik Anadolu Lisesi</p>
+            <p>Haber Otomasyonu v5.0 - Profesyonel Sürüm</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+    </script>
 </body>
 
 </html>
